@@ -1,0 +1,5 @@
+/* Azure Bay page styling: a dark sunset frame around the game canvas. */
+html, body { margin: 0; padding: 0; background: #120a1e; height: 100%; }
+body { display: flex; align-items: center; justify-content: center; }
+#frame { line-height: 0; box-shadow: 0 0 60px rgba(255, 140, 40, 0.25); }
+#game { display: block; background: #1a0f2e; cursor: crosshair; }
