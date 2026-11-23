@@ -2,6 +2,7 @@
 // gunfire raises the wanted level and scares nearby pedestrians.
 import { WEAPONS } from './config.js';
 import { Input } from './input.js';
+import { AudioSys } from './audio.js';
 import { spawnSparks, spawnSmallExplosion, addFloater } from './effects.js';
 import { addWanted } from './police.js';
 import { damagePlayer } from './player.js';
@@ -42,6 +43,7 @@ export function updateCombat(G, dt) {
       p.ammo[p.weapon]--;
       G.shootCd = w.rate / 1000;
       G.gunshotT = 2;
+      AudioSys.shot();
       const mx = p.x + Math.cos(p.aim) * 26, my = p.y + Math.sin(p.aim) * 26;
       spawnSparks(G, mx, my, 4, '#ffd94a');
       if (G.crimeT <= 0) { addWanted(G, 1, 'shots'); G.crimeT = 3; }

@@ -217,8 +217,18 @@ function prerenderMinimap(world) {
   cv.width = 200; cv.height = 150;
   const c = cv.getContext('2d');
   const sx = 200 / CFG.worldW, sy = 150 / CFG.worldH;
-  c.fillStyle = '#14101e'; c.fillRect(0, 0, 200, 150);
-  c.fillStyle = '#3a3a48';
+  c.fillStyle = '#241f33'; c.fillRect(0, 0, 200, 150);
+  // District tints.
+  for (const d of DISTRICTS) {
+    c.fillStyle = d.ground;
+    c.globalAlpha = 0.55;
+    c.fillRect(d.x0 * sx, d.y0 * sy, (d.x1 - d.x0) * sx, (d.y1 - d.y0) * sy);
+  }
+  c.globalAlpha = 1;
+  // Building blocks.
+  c.fillStyle = '#453d5e';
+  for (const b of world.buildings) c.fillRect(b.x * sx, b.y * sy, Math.max(1, b.w * sx), Math.max(1, b.h * sy));
+  c.fillStyle = '#8a8a9a';
   for (const ax of CFG.avenues) c.fillRect(ax * sx - 1, 0, 2, 150);
   for (const sy2 of CFG.streets) c.fillRect(0, sy2 * sy - 1, 200, 2);
   c.fillStyle = '#2a7ab8'; c.fillRect(3110 * sx, 0, 90 * sx, 150);

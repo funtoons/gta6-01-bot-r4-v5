@@ -5,7 +5,6 @@
 import { CFG, DISTRICTS, WEAPONS, RADIO, SHOPS, RACE_COURSES } from './config.js';
 import { missionObjective, missionMarker } from './missions.js';
 import { policeUnits } from './police.js';
-import { districtAt } from './world.js';
 import { districtNameAt } from './render.js';
 import { hasSave } from './save.js';
 
@@ -106,9 +105,10 @@ export function drawHud(G) {
   const mx = 104, my = 606, mr = 88;
   c.save();
   c.beginPath(); c.arc(mx, my, mr, 0, Math.PI * 2); c.clip();
-  const scale = (mr * 2) / 900;
-  const sx = p.x - 450, sy = p.y - 450;
-  c.drawImage(G.world.mini, sx * scale + mx - 450 * scale, sy * scale + my - 450 * scale, 900 * scale, 900 * scale);
+  // Minimap canvas is the whole world at 1/16 scale; show a 900-unit
+  // window around the player, centred on the circle.
+  const k = (mr * 2) / 900;
+  c.drawImage(G.world.minimap, mx - p.x * k, my - p.y * k, 3200 * k, 2400 * k);
   c.restore();
   c.strokeStyle = 'rgba(255,255,255,0.5)';
   c.lineWidth = 2;
@@ -117,7 +117,7 @@ export function drawHud(G) {
   c.fillStyle = '#2dd4bf';
   c.beginPath(); c.arc(mx, my, 4, 0, Math.PI * 2); c.fill();
   if (mk) {
-    const dx = (mk.x - p.x) * scale, dy = (mk.y - p.y) * scale;
+    const dx = (mk.x - p.x) * k, dy = (mk.y - p.y) * k;
     const dl = Math.hypot(dx, dy);
     const cl = Math.min(dl, mr - 8) / Math.max(1, dl);
     c.fillStyle = '#ffd94a';
@@ -125,13 +125,13 @@ export function drawHud(G) {
   }
   c.fillStyle = '#fff';
   c.font = 'bold 13px system-ui, sans-serif';
-  c.fillText(districtNameAt(G).toUpperCase(), 208, 596);
+  c.fillText(districtNameAt(G).toUpperCase(), 214, 596);
   c.font = '11px system-ui, sans-serif';
   c.fillStyle = '#c8c8c8';
-  c.fillText('HEALTH', 208, 622);
-  bar(c, 208, 628, 150, 9, p.health / 100, '#7cfc9a');
-  c.fillText('ARMOUR', 208, 654);
-  bar(c, 208, 660, 150, 9, p.armor / 100, '#93c5fd');
+  c.fillText('HEALTH', 214, 622);
+  bar(c, 214, 628, 150, 9, p.health / 100, '#7cfc9a');
+  c.fillText('ARMOUR', 214, 654);
+  bar(c, 214, 660, 150, 9, p.armor / 100, '#93c5fd');
   // --- Bottom-center: dialog.
   if (G.dialog && G.dialog.t > 0) {
     const who = G.dialog.who;
@@ -164,7 +164,7 @@ export function drawHud(G) {
   panel(c, 480, 566, 320, 22, 0.6);
   c.fillStyle = '#ffd94a';
   c.font = 'bold 11px system-ui, sans-serif';
-  c.fillText(`♪ ${st.name} — ${st.tracks[G.radio.track]}`, 492, 581);
+  c.fillText(`♪ ${st.name} — ${st.tag}`, 492, 581);
   c.fillStyle = '#c8c8c8';
   c.fillText('[Q] radio', 740, 581);
   // --- Prompt.
@@ -177,7 +177,7 @@ export function drawHud(G) {
   }
   // --- Bottom-right: speed + car + condition + weapons.
   panel(c, 1008, 600, 260, 100, 0.72);
-  const mph = p.inCar ? Math.round(Math.abs(p.inCar.speed) * 0.06) : Math.round(p.speed * 0.06);
+  const mph = p.inCar ? Math.round(Math.abs(p.inCar.speed) * 0.12) : Math.round(p.speed * 0.06);
   c.fillStyle = '#fff';
   c.font = 'bold 40px system-ui, sans-serif';
   c.textAlign = 'right';
@@ -225,7 +225,7 @@ export function drawHud(G) {
   if (G.race) {
     c.fillStyle = '#7cfc9a';
     c.font = 'bold 14px system-ui, sans-serif';
-    c.fillText(`RACE ${RACE_COURSES[G.race.course].name}: CP ${G.race.cp + 1}/${RACE_COURSES[G.race.course].checkpoints.length} — ${Math.ceil(G.race.t)}s`, 500, 40);
+    c.fillText(`RACE ${RACE_COURSES[G.race.course].name}: CP ${G.race.cp + 1}/${RACE_COURSES[G.race.course].points.length - 1} — ${Math.ceil(G.race.t)}s`, 500, 40);
   }
   if (G.mission && G.mission.timer > 0) {
     c.fillStyle = '#ff8a7a';
@@ -325,9 +325,9 @@ export function drawMap(G) {
   c.font = '13px system-ui, sans-serif';
   c.fillStyle = '#c8c8c8';
   c.fillText('M / Esc to close  •  Yellow diamond = mission  •  Teal dot = you', 190, 84);
-  const mw = 900, mh = 540;
+  const mw = 720, mh = 540;
   const mx = 190, my = 100;
-  c.drawImage(G.world.mini, mx, my, mw, mh);
+  c.drawImage(G.world.minimap, mx, my, mw, mh);
   c.strokeStyle = 'rgba(255,255,255,0.4)';
   c.strokeRect(mx, my, mw, mh);
   const s = mw / CFG.worldW;
@@ -343,11 +343,11 @@ export function drawMap(G) {
   c.font = 'bold 13px system-ui, sans-serif';
   c.fillStyle = 'rgba(255,255,255,0.9)';
   for (const d of DISTRICTS) {
-    c.fillText(d.name.toUpperCase(), mx + d.x * s + 6, my + d.y * s + 6);
+    c.fillText(d.name.toUpperCase(), mx + d.x0 * s + 6, my + d.y0 * s + 6);
   }
   // Career stats on the right.
   const st = p.stats;
-  const sx = 1120, sy = 120;
+  const sx = 940, sy = 120;
   c.fillStyle = '#fff';
   c.font = 'bold 16px system-ui, sans-serif';
   c.fillText('CAREER', sx, sy);

@@ -3,7 +3,7 @@ import { CFG, RADIO } from './config.js';
 import { RNG } from './random.js';
 import { Input } from './input.js';
 import { AudioSys } from './audio.js';
-import { createWorld } from './world.js';
+import { buildWorld } from './world.js';
 import { renderWorld, updateCamera } from './render.js';
 import { drawHud, drawTitle, drawPause, drawMap, drawBusted, drawWasted, drawEnding } from './hud.js';
 import { newPlayer, updatePlayer } from './player.js';
@@ -62,14 +62,14 @@ function newGame(save) {
   }
   spawnPeds(G);
   initActivities(G);
-  startMission(G, save ? save.mission : 0);
+  startMission(G, save && save.mission >= 0 ? save.mission : 0);
   G.mode = 'play';
 }
 
 function respawn(kind) {
   const p = G.player;
   p.health = 100; p.armor = 0; p.wanted = 0; p.evade = 0;
-  p.inCar = null; p.gunshotT = 0;
+  p.inCar = null; p.gunshotT = 0; p.invulnT = 2;
   G.copPeds = [];
   G.heli = null;
   if (kind === 'busted') { p.x = 600; p.y = 260; }
@@ -104,12 +104,15 @@ function step(dt) {
     if (Input.wasPressed('KeyQ')) {
       G.radio.station = (G.radio.station + 1) % RADIO.length;
       G.radio.track = 0;
-      AudioSys.playRadio(G.radio.station, 0);
+      AudioSys.setStation(G.radio.station);
     }
     if (G.tick % 1440 === 0) {
-      G.radio.track = (G.radio.track + 1) % RADIO[G.radio.station].tracks.length;
-      AudioSys.playRadio(G.radio.station, G.radio.track);
+      G.radio.track = (G.radio.track + 1) % RADIO[G.radio.station].chords.length;
+      AudioSys.setStation(G.radio.station);
     }
+    AudioSys.radioTick(dt, !!p.inCar);
+    AudioSys.engine(p.inCar ? Math.min(1, Math.abs(p.inCar.speed) / p.inCar.max) : 0, !!p.inCar);
+    AudioSys.siren(p.wanted > 0, G.tick);
     if (Input.wasPressed('KeyM')) G.mode = 'map';
     if (Input.wasPressed('KeyP') || Input.wasPressed('Escape')) G.mode = 'pause';
     G.saveT += dt;
@@ -169,7 +172,7 @@ function onClick(e) {
 }
 
 function boot() {
-  G.world = createWorld();
+  G.world = buildWorld(CFG.seed);
   G.player = newPlayer(940, 1360);
   G.cam.x = Math.max(0, Math.min(3200 - 1280, G.player.x - 640));
   G.cam.y = Math.max(0, Math.min(2400 - 720, G.player.y - 360));

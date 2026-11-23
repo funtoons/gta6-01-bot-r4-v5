@@ -30,7 +30,7 @@ export function applyShot(G, name) {
   if (name === 'chase') {
     p.x = 1800; p.y = 1100;
     const car = makeCar(G, 'coupe', 1800, 1100, 0);
-    car.isPlayer = true; car.color = '#2dd4bf';
+    car.isPlayer = true; car.color = '#2dd4bf'; car.speed = 300;
     p.inCar = car; p.speed = 0;
     p.wanted = 4;
     p.cash = 12450;
@@ -38,13 +38,13 @@ export function applyShot(G, name) {
     G.mission.stage = 0;
     G.mission.timer = 62;
     // Pursuit cars + a roadblock fully in frame, ahead of the player.
-    const cops = [[1560, 980], [1620, 1240], [2060, 980], [2120, 1240]];
-    for (const [x, y] of cops) {
+    const cops = [[1560, 980, 'APD-12', 'IN PURSUIT'], [1620, 1240, 'APD-07', 'RAMMING'], [2060, 980, 'APD-23', 'FLANKING'], [2120, 1240, 'APD-31', 'CLOSING IN']];
+    for (const [x, y, unit, role] of cops) {
       const c = makeCar(G, 'police', x, y, Math.atan2(p.y - y, p.x - x));
-      c.isPolice = true;
+      c.isPolice = true; c.unit = unit; c.role = role;
     }
-    const rb1 = makeCar(G, 'police', 2200, 1076, Math.PI / 2); rb1.isPolice = true;
-    const rb2 = makeCar(G, 'police', 2200, 1124, Math.PI / 2); rb2.isPolice = true;
+    const rb1 = makeCar(G, 'police', 2200, 1076, Math.PI / 2); rb1.isPolice = true; rb1.unit = 'APD-RB'; rb1.role = 'ROADBLOCK';
+    const rb2 = makeCar(G, 'police', 2200, 1124, Math.PI / 2); rb2.isPolice = true; rb2.unit = 'APD-RB'; rb2.role = 'ROADBLOCK';
     G.roadblock = true;
     G.heli = { x: 1800, y: 940, unit: 'AIR-1' };
     trafficNear(G, 1800, 1100);
@@ -88,7 +88,7 @@ export function applyShot(G, name) {
     trafficNear(G, 600, 2000);
     spawnPeds(G);
     // Small, contained explosion timed to be fresh at capture.
-    G.stagedFx = { at: 44, fn: (g) => { spawnSmallExplosion(g, 300, 1960); spawnSmoke(g, 300, 1960, 3); } };
+    G.stagedFx = { at: 47, fn: (g) => { spawnSmallExplosion(g, 300, 1960); spawnSmoke(g, 300, 1960, 3); } };
     setDialog(G, 'carmen', 'The ledger is inside the warehouse. Take the Vipers down.', 999);
   } else if (name === 'system') {
     p.x = 1800; p.y = 1100; p.cash = 4850;

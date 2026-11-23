@@ -35,8 +35,9 @@ function collideCarBuilding(G, car) {
   car.y = cy + dy * 21;
   // Slide along the wall: keep the tangential component, kill the normal one.
   const vn = Math.cos(car.angle) * dx + Math.sin(car.angle) * dy;
-  if (vn < 0 && Math.abs(car.speed) > 60) {
-    car.hp -= 2; car.damage += 2;
+  if (vn < 0 && Math.abs(car.speed) > 60 && (car.hitT || 0) <= 0) {
+    car.hp -= 4; car.damage += 4;
+    car.hitT = 0.6;
     spawnSparks(G, car.x - dx * 20, car.y - dy * 20, 3);
   }
   car.speed *= 0.92;
@@ -72,7 +73,7 @@ function updatePlayerCar(G, dt) {
   p.x = car.x; p.y = car.y; p.angle = car.angle; p.speed = Math.abs(car.speed);
   // E exits the car — unless parked at a respray shop, where E is respray.
   if (Input.peekPressed('KeyE')) {
-    const atRespray = SHOPS.respray.some((rs) => Math.hypot(p.x - rs.x, p.y - rs.y) < 80);
+    const atRespray = [SHOPS.spray1, SHOPS.spray2].some((rs) => Math.hypot(p.x - rs.x, p.y - rs.y) < 80);
     if (!atRespray) { Input.consume('KeyE'); exitCar(G); }
   }
   if (car.hp <= 0) wreckCar(G, car);
@@ -187,6 +188,7 @@ function updateTrafficCar(G, car, dt) {
 }
 
 export function updateVehicles(G, dt) {
+  for (const car of G.cars) car.hitT = Math.max(0, (car.hitT || 0) - dt);
   updatePlayerCar(G, dt);
   // Keep traffic dense near the player.
   const traffic = G.cars.filter((c) => c.isTraffic && !c.dead);
