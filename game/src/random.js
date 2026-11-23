@@ -1,4 +1,4 @@
-// Seeded deterministic RNG (LCG) — the game never uses Math.random or Date.
+// Seeded deterministic RNG (LCG) — the game never uses unseeded randomness or Date.
 // Every random stream in the game draws from one of these, so a fixed seed
 // replays the same world, traffic and staging on every run.
 export class RNG {
