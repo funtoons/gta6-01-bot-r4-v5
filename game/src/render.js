@@ -1,6 +1,6 @@
 // World rendering: blit the prerendered city, then draw markers and every
 // entity sorted by y. Camera is a 1280x720 window into the 3200x2400 world.
-import { CFG, DISTRICTS, RACE_COURSES } from './config.js';
+import { CFG, RACE_COURSES } from './config.js';
 import { districtAt } from './world.js';
 import { missionMarker } from './missions.js';
 
@@ -131,7 +131,7 @@ export function renderWorld(G) {
   c.save();
   c.translate(-Math.round(cam.x + shx), -Math.round(cam.y + shy));
   // Prerendered city.
-  c.drawImage(G.world.base, 0, 0);
+  c.drawImage(G.world.canvas, 0, 0);
   // Skid marks.
   c.strokeStyle = 'rgba(20,16,12,0.5)';
   c.lineWidth = 3;
@@ -144,7 +144,7 @@ export function renderWorld(G) {
   if (G.taxiFare) drawMarker(c, G.taxiFare.x, G.taxiFare.y, '#f5c518', G.tick);
   if (G.race) {
     const rc = RACE_COURSES[G.race.course];
-    const cp = rc.checkpoints[G.race.cp];
+    const cp = rc.points[G.race.cp + 1];
     if (cp) drawMarker(c, cp[0], cp[1], '#7cfc9a', G.tick);
   }
   // Packages (sparkle when close).
@@ -248,6 +248,5 @@ function drawPlayerShape(c, p, t) {
 }
 
 export function districtNameAt(G) {
-  const d = districtAt(G.world, G.player.x, G.player.y);
-  return DISTRICTS[d].name;
+  return districtAt(G.player.x, G.player.y).name;
 }

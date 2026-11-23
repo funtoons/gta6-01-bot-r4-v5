@@ -7,15 +7,10 @@ import { addFloater } from './effects.js';
 import { setDialog } from './missions.js';
 import { saveGame } from './save.js';
 
-export const PACKAGE_SPOTS = [
-  [340, 340], [560, 940], [940, 340], [1340, 740], [1740, 340], [2140, 940],
-  [2540, 340], [2940, 940], [340, 1540], [940, 2140], [1340, 1540], [1740, 2140],
-  [2140, 1540], [2540, 2140], [2940, 1540], [340, 2140], [740, 1140], [1140, 740],
-  [2340, 1140], [2740, 1740],
-];
-
 export function initActivities(G) {
-  G.packages = PACKAGE_SPOTS.map(([x, y]) => ({ x, y, got: false }));
+  // Package spots come from the seeded world gen: 20 spots, never inside a
+  // building or on a road.
+  G.packages = G.world.packages.map((pk) => ({ x: pk.x, y: pk.y, got: false }));
   G.taxiFare = null;
   G.vigilante = null;
   G.race = null;
@@ -75,14 +70,14 @@ export function updateActivities(G, dt) {
     G.vigilante.t -= dt;
     if (G.vigilante.t <= 0) G.vigilante = null;
   }
-  // Races: press R at a start marker.
+  // Races: press R at a start marker (points[0]); checkpoints are the rest.
   if (!G.race && !p.inCar) {
     for (let i = 0; i < RACE_COURSES.length; i++) {
       const rc = RACE_COURSES[i];
-      if (Math.hypot(p.x - rc.start[0], p.y - rc.start[1]) < 50) {
+      if (Math.hypot(p.x - rc.points[0][0], p.y - rc.points[0][1]) < 50) {
         G.prompt = `R — Start race: ${rc.name} ($400)`;
         if (Input.wasPressed('KeyR')) {
-          G.race = { course: i, cp: 0, t: rc.limit };
+          G.race = { course: i, cp: 0, t: 120 };
           setDialog(G, 'dispatch', `${rc.name}: hit every checkpoint before the clock runs out.`, 4);
         }
       }
@@ -91,10 +86,10 @@ export function updateActivities(G, dt) {
   if (G.race) {
     const rc = RACE_COURSES[G.race.course];
     G.race.t -= dt;
-    const cp = rc.checkpoints[G.race.cp];
+    const cp = rc.points[G.race.cp + 1];
     if (Math.hypot(p.x - cp[0], p.y - cp[1]) < 60) {
       G.race.cp++;
-      if (G.race.cp >= rc.checkpoints.length) {
+      if (G.race.cp >= rc.points.length - 1) {
         p.cash += 400;
         p.stats.racesWon++;
         addFloater(G, p.x, p.y - 30, '+$400 RACE WON', '#ffd94a');
@@ -108,7 +103,7 @@ export function updateActivities(G, dt) {
   // Shops (E). On foot, entering a nearby car wins over the shop; in a car,
   // E at a respray shop is respray (exit is suppressed there, see vehicles).
   if (p.inCar) {
-    for (const rs of SHOPS.respray) {
+    for (const rs of [SHOPS.spray1, SHOPS.spray2]) {
       if (Math.hypot(p.x - rs.x, p.y - rs.y) < 80) {
         G.prompt = 'E — Azure Spray: Respray $150 (clears wanted)';
         if (Input.peekPressed('KeyE') && p.cash >= 150) {

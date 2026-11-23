@@ -118,6 +118,7 @@ export function updateMissions(G, dt) {
   const dy = st.y !== undefined ? p.y - st.y : 0;
   const d = Math.hypot(dx, dy);
   if (st.type === 'goto' && d < 48) advance(G);
+  else if (st.type === 'timed' && d < 64) advance(G);
   else if (st.type === 'deliver' && d < 64) {
     if (m.index === 1) { p.wanted = 0; }
     advance(G);
