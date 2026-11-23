@@ -105,34 +105,37 @@ export function updateActivities(G, dt) {
       setDialog(G, 'dispatch', 'Race over — too slow. Try again at the start line.', 4);
     }
   }
-  // Shops (E), only when not about to enter a car.
-  if (!nearCar(G, 52)) {
-    const gun = SHOPS.gun;
-    if (!p.inCar && Math.hypot(p.x - gun.x, p.y - gun.y) < 70) {
-      G.prompt = 'E — Harbor Arms: Pistol $300 / Ammo $60';
-      if (Input.wasPressed('KeyE')) {
-        if (p.ammo.pistol === 0 && p.cash >= 300) {
-          p.cash -= 300; p.ammo.pistol = 48; p.weapon = 'pistol';
-          setDialog(G, 'shop', 'Harbor Arms: a pistol, fresh out of the box. Stay safe out there.', 4);
-        } else if (p.cash >= 60) {
-          p.cash -= 60; p.ammo.pistol += 24; p.ammo.smg += 30; p.ammo.shotgun += 12;
-          setDialog(G, 'shop', 'Harbor Arms: ammo restocked. Thanks for the business.', 4);
+  // Shops (E). On foot, entering a nearby car wins over the shop; in a car,
+  // E at a respray shop is respray (exit is suppressed there, see vehicles).
+  if (p.inCar) {
+    for (const rs of SHOPS.respray) {
+      if (Math.hypot(p.x - rs.x, p.y - rs.y) < 80) {
+        G.prompt = 'E — Azure Spray: Respray $150 (clears wanted)';
+        if (Input.peekPressed('KeyE') && p.cash >= 150) {
+          Input.consume('KeyE');
+          p.cash -= 150;
+          p.wanted = 0;
+          p.inCar.hp = p.inCar.maxHp;
+          p.inCar.damage = 0;
+          p.inCar.color = '#2dd4bf';
+          saveGame(G);
+          setDialog(G, 'shop', 'Azure Spray: new paint, clean plates. The cops lost you.', 4);
         }
       }
     }
-    if (p.inCar) {
-      for (const rs of SHOPS.respray) {
-        if (Math.hypot(p.x - rs.x, p.y - rs.y) < 80) {
-          G.prompt = 'E — Azure Spray: Respray $150 (clears wanted)';
-          if (Input.wasPressed('KeyE') && p.cash >= 150) {
-            p.cash -= 150;
-            p.wanted = 0;
-            p.inCar.hp = p.inCar.maxHp;
-            p.inCar.damage = 0;
-            p.inCar.color = '#2dd4bf';
-            saveGame(G);
-            setDialog(G, 'shop', 'Azure Spray: new paint, clean plates. The cops lost you.', 4);
-          }
+  } else if (!nearCar(G, 52)) {
+    const gun = SHOPS.gun;
+    if (Math.hypot(p.x - gun.x, p.y - gun.y) < 70) {
+      G.prompt = 'E — Harbor Arms: Pistol $300 / Ammo $60';
+      if (Input.peekPressed('KeyE')) {
+        if (p.ammo.pistol === 0 && p.cash >= 300) {
+          Input.consume('KeyE');
+          p.cash -= 300; p.ammo.pistol = 48; p.weapon = 'pistol';
+          setDialog(G, 'shop', 'Harbor Arms: a pistol, fresh out of the box. Stay safe out there.', 4);
+        } else if (p.cash >= 60) {
+          Input.consume('KeyE');
+          p.cash -= 60; p.ammo.pistol += 24; p.ammo.smg += 30; p.ammo.shotgun += 12;
+          setDialog(G, 'shop', 'Harbor Arms: ammo restocked. Thanks for the business.', 4);
         }
       }
     }

@@ -66,7 +66,6 @@ export function updatePeds(G, dt) {
     // Walk along the sidewalk: keep the road offset, drift along the axis.
     if (ped.axis === 'v') {
       ped.y += Math.sin(ped.angle) * ped.speed * dt;
-      ped.x += (Math.sign(ped.x - nearestRoad(ped.x, ped.y).x || 1) * 0 + 0);
       if (G.rng.chance(dt * 0.05)) ped.angle = G.rng.chance(0.5) ? Math.PI / 2 : -Math.PI / 2;
       if (ped.y < 60 || ped.y > CFG.worldH - 60) ped.angle += Math.PI;
     } else {

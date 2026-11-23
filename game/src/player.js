@@ -40,7 +40,7 @@ export function updatePlayer(G, dt) {
   const sp = sprint ? CFG.sprintSpeed : CFG.walkSpeed;
   const len = Math.hypot(ax.x, ax.y);
   if (len > 0) {
-    const nx = ax.x / len, ny = ay0(ax, len);
+    const nx = ax.x / len, ny = ax.y / len;
     p.x += nx * sp * dt;
     p.y += ny * sp * dt;
     p.angle = Math.atan2(ny, nx);
@@ -52,8 +52,8 @@ export function updatePlayer(G, dt) {
   // Aim at the mouse (world position).
   const wx = G.cam.x + Input.mouse.x, wy = G.cam.y + Input.mouse.y;
   p.aim = Math.atan2(wy - p.y, wx - p.x);
-  // Enter a nearby car with E.
-  if (Input.wasPressed('KeyE')) {
+  // Enter a nearby car with E (only the acting system consumes the press).
+  if (Input.peekPressed('KeyE')) {
     let best = null, bd = 52;
     for (const car of G.cars) {
       if (car.wreck) continue;
@@ -61,6 +61,7 @@ export function updatePlayer(G, dt) {
       if (d < bd) { bd = d; best = car; }
     }
     if (best) {
+      Input.consume('KeyE');
       p.inCar = best;
       best.isPlayer = true;
       best.driver = 'player';
@@ -76,8 +77,6 @@ export function updatePlayer(G, dt) {
     }
   }
 }
-
-function ay0(ax, len) { return ax.y / len; }
 
 export function exitCar(G) {
   const p = G.player, car = p.inCar;

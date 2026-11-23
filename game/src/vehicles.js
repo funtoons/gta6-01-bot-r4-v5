@@ -1,6 +1,6 @@
 // Car physics, damage, traffic AI, spawn/despawn. Cars are circles for
 // collision (radius ~20) with a drawn rectangle body on top.
-import { CFG, CARS } from './config.js';
+import { CFG, CARS, SHOPS } from './config.js';
 import { Input } from './input.js';
 import { RNG } from './random.js';
 import { pointInBuilding, trafficLightAt, nearestRoad, isRoad } from './world.js';
@@ -70,7 +70,11 @@ function updatePlayerCar(G, dt) {
   car.y = Math.max(24, Math.min(CFG.worldH - 24, car.y));
   collideCarBuilding(G, car);
   p.x = car.x; p.y = car.y; p.angle = car.angle; p.speed = Math.abs(car.speed);
-  if (Input.wasPressed('KeyE')) exitCar(G);
+  // E exits the car — unless parked at a respray shop, where E is respray.
+  if (Input.peekPressed('KeyE')) {
+    const atRespray = SHOPS.respray.some((rs) => Math.hypot(p.x - rs.x, p.y - rs.y) < 80);
+    if (!atRespray) { Input.consume('KeyE'); exitCar(G); }
+  }
   if (car.hp <= 0) wreckCar(G, car);
 }
 

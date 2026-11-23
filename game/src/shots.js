@@ -97,6 +97,8 @@ export function applyShot(G, name) {
     p.stats.gangDown = 9; p.stats.timeMin = 47;
     startMission(G, 3);
     G.mode = 'map';
+    // The map screen is static, so the shot is ready immediately.
+    G.shotReady = true;
   }
   // Center the camera on the player right away.
   G.cam.x = Math.max(0, Math.min(3200 - 1280, p.x - 640));

@@ -40,6 +40,8 @@ const G = {
 
 window.__game = G;
 window.__gameReady = false;
+// Test-only handle so the local playtest can drive mission starts.
+window.__debug = { startMission: (i) => startMission(G, i) };
 
 function newGame(save) {
   G.tick = 0;
@@ -78,6 +80,9 @@ function respawn(kind) {
 
 function step(dt) {
   if (G.mode === 'play') {
+    // Staged capture: freeze the simulation the moment the shot is ready
+    // so re-renders are byte-identical; rendering keeps drawing the frame.
+    if (G.staging && G.shotReady) { Input.endTick(); return; }
     G.tick++;
     const p = G.player;
     p.stats.timeMin += dt / 60;
